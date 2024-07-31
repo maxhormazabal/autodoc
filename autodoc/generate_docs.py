@@ -46,6 +46,17 @@ def find_diagram_file(docs_path):
             return diagram_path, f'diagram{ext}'
     return None, None
 
+def include_image(markdown_content, doc_folder, docs_path, name):
+    # Include image if available
+    diagram_path, diagram_file = find_diagram_file(docs_path)
+    if diagram_file:
+        dest_diagram_path = os.path.join(doc_folder, f'images/{name}_{diagram_file}')
+        copy_image(diagram_path, dest_diagram_path)
+        markdown_content.append(centered_image_block(alt_text="Module Diagram", path=f"images/{name}_{diagram_file}", md_only=True))
+    else:
+        markdown_content.append(centered_image_block(alt_text="Diagram", path=f"images/default_diagram.png", md_only=True))
+    return markdown_content        
+
 def generate_markdown_for_component(component_path, component_name, doc_folder):
     """Generate markdown content for a component."""
     markdown_content = [f"### {component_name.capitalize()}\n"]
@@ -56,16 +67,9 @@ def generate_markdown_for_component(component_path, component_name, doc_folder):
 
     # Add description to markdown
     markdown_content.append(f"{component_desc}\n")
-    
-    # Include image if available
-    diagram_path, diagram_file = find_diagram_file(component_docs_path)
-    if diagram_file:
-        dest_diagram_path = os.path.join(doc_folder, f'images/{component_name}_{diagram_file}')
-        copy_image(diagram_path, dest_diagram_path)
-        markdown_content.append(centered_image_block(alt_text="Module Diagram", path=f"images/{component_name}_{diagram_file}", md_only=True))
-    else:
-        markdown_content.append(centered_image_block(alt_text="Diagram", path=f"images/default_diagram.png", md_only=True))
 
+    markdown_content = include_image(markdown_content, doc_folder, component_docs_path, component_name)
+    
     use_cases_content = []
     services_content = []
     
@@ -96,46 +100,27 @@ def generate_markdown_for_component(component_path, component_name, doc_folder):
     
     return '\n'.join(markdown_content)
 
-def create_documentation(src_folder, doc_folder):
-    """Create documentation for all modules and components."""
-    markdown_content = ["# Modules\n"]
+def generate_markdown_for_modules(module_path, markdown_content, module_name, doc_folder):
+    module_docs_path = os.path.join(module_path, 'docs')
+    module_desc = read_file_content(os.path.join(module_docs_path, 'desc.txt')) or DEFAULT_DESC
     
+    markdown_content.append(f"## {module_name.capitalize()}\n")
+    markdown_content.append(f"{module_desc}\n")
+
+    markdown_content = include_image(markdown_content, doc_folder, module_docs_path, module_name)
+
+    return markdown_content
+
+
+def create_documentation(markdown_content, src_folder, doc_folder):
     for module_name in os.listdir(src_folder):
         module_path = os.path.join(src_folder, module_name)
         if os.path.isdir(module_path):
-            module_docs_path = os.path.join(module_path, 'docs')
-            module_desc = read_file_content(os.path.join(module_docs_path, 'desc.txt')) or DEFAULT_DESC
-            
-            markdown_content.append(f"## {module_name.capitalize()}\n")
-            markdown_content.append(f"{module_desc}\n")
-            
-            # Copy module diagram if available
-            module_diagram_path, module_diagram_file = find_diagram_file(module_docs_path)
-            if module_diagram_file:
-                dest_diagram_path = os.path.join(doc_folder, f'images/{module_name}_{module_diagram_file}')
-                copy_image(module_diagram_path, dest_diagram_path)
-                markdown_content.append(centered_image_block(alt_text="Module Diagram", path=f"images/{module_name}_{module_diagram_file}", md_only=True))
-            else:
-                markdown_content.append(centered_image_block(alt_text="Module Diagram", path=f"images/default_diagram.png", md_only=True))
-            
+            markdown_content = generate_markdown_for_modules(module_path, markdown_content, module_name, doc_folder)
             for component_name in os.listdir(module_path):
                 component_path = os.path.join(module_path, component_name)
                 if os.path.isdir(component_path) and component_name != 'docs':
                     component_markdown = generate_markdown_for_component(component_path, component_name, doc_folder)
                     if component_markdown:
                         markdown_content.append(component_markdown)
-    
-    with open(os.path.join(doc_folder, 'modules.md'), 'w', encoding='utf-8') as md_file:
-        md_file.write('\n'.join(markdown_content))
-        print(f"Generated documentation in {os.path.join(doc_folder, 'modules.md')}")
-
-if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Generate markdown documentation for Python scripts.")
-    parser.add_argument("src_folder", type=str, help="Source folder containing Python modules")
-    parser.add_argument("doc_folder", type=str, help="Documentation folder to save the markdown file")
-    
-    args = parser.parse_args()
-    
-    create_documentation(args.src_folder, args.doc_folder)
+    return markdown_content
