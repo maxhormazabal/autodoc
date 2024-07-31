@@ -1,0 +1,2 @@
+click-man==0.4.1
+mkdocs==1.6.0
