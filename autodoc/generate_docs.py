@@ -117,6 +117,7 @@ def create_documentation(markdown_content, src_folder, doc_folder):
         module_path = os.path.join(src_folder, module_name)
         if os.path.isdir(module_path):
             markdown_content = generate_markdown_for_modules(module_path, markdown_content, module_name, doc_folder)
+            module_path = module_path + "/components"
             for component_name in os.listdir(module_path):
                 component_path = os.path.join(module_path, component_name)
                 if os.path.isdir(component_path) and component_name != 'docs':

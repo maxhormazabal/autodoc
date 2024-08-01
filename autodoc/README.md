@@ -13,16 +13,6 @@ Autodoc library aims to build a basic documentation for projects that follow the
 
 It works with `mkdocs` library and create a modules.md file catching every single docstring for services and usecases. 
 
-## Install requirements
-
-```bash
-cd documentation
-```
-
-```bash
-pip install -r autodoc/requirements.txt
-```
-
 ## Init documentation
 
 ```bash
@@ -37,11 +27,11 @@ mkdocs serve -a localhost:8001
 ### Execute
 
 ```bash
-python ./documentation/autodoc/generate_docs.py <code folder> ./documentation/docs
+python ./documentation/autodoc/main.py <code folder> ./documentation/docs
 ```
 
 For example
 
 ```bash
-python ./documentation/autodoc/generate_docs.py ./src ./documentation/docs
+python ./documentation/autodoc/main.py ./modules ./documentation/docs
 ```
